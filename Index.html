@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FinanceFlow Pro | Ícaro Taylam</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --nav-bg: #1e272e;
+            --border: #ddd;
+            --primary: #27ae60;
+            --danger: #e74c3c;
+            --calc-btn: #ffffff;
+            --calc-text: #333;
+            --footer-bg: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --text: #e0e0e0;
+            --nav-bg: #000000;
+            --border: #333;
+            --calc-btn: #333;
+            --calc-text: #fff;
+            --footer-bg: #1e1e1e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        nav.navbar {
+            background: var(--nav-bg);
+            padding: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        nav a, #theme-btn {
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .container {
+            padding: 10px; /* Reduzi para ganhar espaço */
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            flex: 1;
+        }
+
+        /* DASHBOARD */
+        .card, .form-box, .history-item {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        input, select, button#add-btn {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card-bg);
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        button#add-btn { background: var(--primary); color: white; border: none; font-weight: bold; }
+
+        /* CALCULADORA AJUSTADA */
+        #calc {
+            width: 100%;
+            padding-bottom: 20px;
+        }
+
+        #calc-display {
+            background: #1a1a1a;
+            color: #27ae60;
+            padding: 25px 15px;
+            text-align: right;
+            font-size: 2.2rem;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+            min-height: 80px;
+            word-wrap: break-word;
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px; /* Espaço certinho entre botões */
+        }
+
+        .btn-calc {
+            background: var(--calc-btn);
+            color: var(--calc-text);
+            height: 65px; /* Altura ideal para o polegar */
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            font-size: 1.3rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-op { background: #f39c12; color: white; border: none; }
+
+        /* NOTAS AJUSTADA */
+        #notas h3 { margin-bottom: 10px; }
+        textarea { 
+            width: 100%; 
+            height: 60vh; /* Ocupa 60% da altura da tela do celular */
+            padding: 15px; 
+            border-radius: 15px; 
+            background: var(--card-bg); 
+            color: var(--text); 
+            border: 1px solid var(--border);
+            font-size: 1.1rem;
+            line-height: 1.5;
+            resize: none;
+        }
+
+        /* HISTÓRICO */
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 6px solid var(--primary);
+        }
+        .history-item.out-border { border-left-color: var(--danger); }
+        .btn-del {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            background: var(--footer-bg);
+            border-top: 1px solid var(--border);
+            font-size: 0.8rem;
+        }
+        footer b { color: var(--primary); }
+
+        .hide { display: none; }
+    </style>
+</head>
+<body data-theme="light">
+
+    <nav class="navbar">
+        <a onclick="show('dashboard')">🏠 Painel</a>
+        <a onclick="show('calc')">🔢 Calc</a>
+        <a onclick="show('notas')">📝 Notas</a>
+        <button id="theme-btn" onclick="toggleTheme()">🌓 Tema</button>
+    </nav>
+
+    <div class="container">
+        
+        <section id="dashboard">
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <div class="card" style="flex: 1; padding: 12px;">
+                    <small>Ganhos</small>
+                    <p style="color: var(--primary)" id="in-total">R$ 0</p>
+                </div>
+                <div class="card" style="flex: 1; padding: 12px;">
+                    <small>Gastos</small>
+                    <p style="color: var(--danger)" id="out-total">R$ 0</p>
+                </div>
+            </div>
+
+            <div class="form-box">
+                <input type="text" id="desc" placeholder="Ex: Gás, Salário...">
+                <input type="number" id="amt" placeholder="Valor R$">
+                <select id="type">
+                    <option value="in">Entrada (+)</option>
+                    <option value="out">Saída (-)</option>
+                </select>
+                <button id="add-btn" onclick="add()">Adicionar</button>
+            </div>
+
+            <canvas id="chart" style="max-height: 250px; margin-bottom: 20px;"></canvas>
+            <div id="list"></div>
+        </section>
+
+        <section id="calc" class="hide">
+            <div id="calc-display">0</div>
+            <div class="calc-grid">
+                <button class="btn-calc btn-op" onclick="clearCalc()">C</button>
+                <button class="btn-calc btn-op" onclick="calcOp('/')">/</button>
+                <button class="btn-calc btn-op" onclick="calcOp('*')">×</button>
+                <button class="btn-calc btn-op" onclick="backspace()">←</button>
+                
+                <button class="btn-calc" onclick="addCalc('7')">7</button>
+                <button class="btn-calc" onclick="addCalc('8')">8</button>
+                <button class="btn-calc" onclick="addCalc('9')">9</button>
+                <button class="btn-calc btn-op" onclick="calcOp('-')">-</button>
+                
+                <button class="btn-calc" onclick="addCalc('4')">4</button>
+                <button class="btn-calc" onclick="addCalc('5')">5</button>
+                <button class="btn-calc" onclick="addCalc('6')">6</button>
+                <button class="btn-calc btn-op" onclick="calcOp('+')">+</button>
+                
+                <button class="btn-calc" onclick="addCalc('1')">1</button>
+                <button class="btn-calc" onclick="addCalc('2')">2</button>
+                <button class="btn-calc" onclick="addCalc('3')">3</button>
+                <button class="btn-calc btn-op" style="grid-row: span 2; height: 138px; background: var(--primary); color: white;" onclick="calculate()">=</button>
+                
+                <button class="btn-calc" style="grid-column: span 2;" onclick="addCalc('0')">0</button>
+                <button class="btn-calc" onclick="addCalc('.')">.</button>
+            </div>
+        </section>
+
+        <section id="notas" class="hide">
+            <h3>Bloco de Notas</h3>
+            <textarea id="note-text" oninput="saveNotes()" placeholder="Escreva seus planos..."></textarea>
+        </section>
+
+    </div>
+
+    <footer>
+        Desenvolvido por <b>Ícaro Taylam</b> &copy; 2026
+    </footer>
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('finances_v2')) || [];
+        let myChart;
+
+        function add() {
+            const desc = document.getElementById('desc').value;
+            const amt = parseFloat(document.getElementById('amt').value);
+            const type = document.getElementById('type').value;
+            if(desc && amt) {
+                db.push({ id: Date.now(), desc, amt, type });
+                save(); render();
+                document.getElementById('desc').value = '';
+                document.getElementById('amt').value = '';
+            }
+        }
+
+        function deleteItem(id) {
+            if(confirm("Excluir registro?")) {
+                db = db.filter(item => item.id !== id);
+                save(); render();
+            }
+        }
+
+        function save() { localStorage.setItem('finances_v2', JSON.stringify(db)); }
+
+        function render() {
+            const list = document.getElementById('list');
+            let tin = 0, tout = 0;
+            list.innerHTML = '';
+            db.forEach(item => {
+                const div = document.createElement('div');
+                div.className = `history-item ${item.type === 'out' ? 'out-border' : ''}`;
+                div.innerHTML = `<div><small>${item.desc}</small><br><b>R$ ${item.amt.toFixed(2)}</b></div>
+                                 <button class="btn-del" onclick="deleteItem(${item.id})">Apagar</button>`;
+                list.prepend(div);
+                item.type == 'in' ? tin += item.amt : tout += item.amt;
+            });
+            document.getElementById('in-total').innerText = `R$ ${tin.toFixed(2)}`;
+            document.getElementById('out-total').innerText = `R$ ${tout.toFixed(2)}`;
+            updateChart(tin, tout);
+        }
+
+        function show(id) {
+            ['dashboard', 'calc', 'notas'].forEach(s => document.getElementById(s).classList.add('hide'));
+            document.getElementById(id).classList.remove('hide');
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const next = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            render();
+        }
+
+        // --- CALC ---
+        let calcVal = '';
+        function addCalc(v) { calcVal += v; updateCalc(); }
+        function calcOp(op) { if(calcVal !== '') calcVal += ` ${op} `; updateCalc(); }
+        function clearCalc() { calcVal = ''; updateCalc(); }
+        function backspace() { calcVal = calcVal.trim().slice(0, -1); updateCalc(); }
+        function updateCalc() { document.getElementById('calc-display').innerText = calcVal || '0'; }
+        function calculate() { 
+            try { 
+                let res = eval(calcVal);
+                calcVal = Number.isInteger(res) ? res.toString() : res.toFixed(2).toString();
+                updateCalc(); 
+            } catch { document.getElementById('calc-display').innerText = 'Erro'; calcVal = ''; } 
+        }
+
+        function updateChart(i, o) {
+            const ctx = document.getElementById('chart').getContext('2d');
+            const color = document.body.getAttribute('data-theme') === 'dark' ? '#fff' : '#333';
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Ganhos', 'Gastos'],
+                    datasets: [{ data: [i, o], backgroundColor: ['#27ae60', '#e74c3c'], borderWeight: 0 }]
+                },
+                options: { plugins: { legend: { labels: { color: color } } } }
+            });
+        }
+
+        function saveNotes() { localStorage.setItem('notes_v2', document.getElementById('note-text').value); }
+
+        window.onload = () => {
+            document.body.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
+            document.getElementById('note-text').value = localStorage.getItem('notes_v2') || '';
+            render();
+        };
+    </script>
+</body>
+</html>
